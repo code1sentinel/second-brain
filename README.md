@@ -2,6 +2,14 @@
 
 A personal knowledge management system built on the **PARA method** by Tiago Forte.
 
+## Graph View
+
+[![Graph view](./graph/graph.svg)](https://code1sentinel.github.io/second-brain/graph/)
+
+**[→ Open interactive graph](https://code1sentinel.github.io/second-brain/graph/)** — zoom, pan, search notes, click any node to explore connections.
+
+> To activate: go to **Settings → Pages**, set source to `main` branch, `/ (root)` folder.
+
 ## Structure
 
 | Folder | Purpose |

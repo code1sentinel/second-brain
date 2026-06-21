@@ -27,6 +27,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add graph/index.html
+          git add graph/index.html graph/graph.svg
           git diff --staged --quiet || git commit -m "chore: update graph view [skip ci]"
           git push
