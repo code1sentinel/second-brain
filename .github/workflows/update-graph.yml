@@ -1,4 +1,4 @@
-name: Update graph view
+name: Update and deploy graph
 
 on:
   push:
@@ -6,13 +6,20 @@ on:
     paths:
       - '**/*.md'
       - 'scripts/generate-graph.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -20,13 +27,29 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate graph data
+      - name: Regenerate graph data and SVG
         run: node scripts/generate-graph.js
 
-      - name: Commit updated graph
+      - name: Commit updated graph files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add graph/index.html graph/graph.svg
-          git diff --staged --quiet || git commit -m "chore: update graph view [skip ci]"
-          git push
+          git diff --staged --quiet || (git commit -m "chore: update graph [skip ci]" && git push)
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
