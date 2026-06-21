@@ -12,7 +12,6 @@ Reference material organized by **topic** — not by project or area.
 ## What does NOT belong here
 
 - Material tied to a specific active project → `01-projects`
-- Your personal responsibilities → `02-areas`
 
 ## Folder convention
 
@@ -25,4 +24,9 @@ Reference material organized by **topic** — not by project or area.
 
 ## Topics
 
-<!-- Add topic folders and link them here as you create them -->
+| Folder | Description |
+|--------|-------------|
+| [ai](./ai/) | Artificial intelligence, LLMs, tools |
+| [coding](./coding/) | Programming, software development, tools |
+| [finances](./finances/) | Budget, investments, taxes |
+| [health](./health/) | Fitness, nutrition, sleep, mental health |
