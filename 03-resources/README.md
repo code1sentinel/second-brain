@@ -30,4 +30,5 @@ Reference material organized by **topic** — not by project or area.
 | [coding](./coding/) | Programming, software development, tools |
 | [cybersecurity](./cybersecurity/) | Security concepts, DFIR, threat hunting, tools |
 | [finances](./finances/) | Budget, investments, taxes |
+| [grc-engineering](./grc-engineering/) | GRC engineering, policy-as-code, OPA, training |
 | [health](./health/) | Fitness, nutrition, sleep, mental health |
