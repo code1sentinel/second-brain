@@ -32,3 +32,4 @@ Reference material organized by **topic** — not by project or area.
 | [finances](./finances/) | Budget, investments, taxes |
 | [grc-engineering](./grc-engineering/) | GRC engineering, policy-as-code, OPA, training |
 | [health](./health/) | Fitness, nutrition, sleep, mental health |
+| [philosophy](./philosophy/) | Stoicism, ethics, wisdom — books and notes |
