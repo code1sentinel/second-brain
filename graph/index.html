@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Brain — Graph View</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #1a1a1a;
+      --surface:  #242424;
+      --surface2: #2e2e2e;
+      --border:   #363636;
+      --text:     #d4d4d4;
+      --muted:    #666;
+      --accent:   #7c6af7;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    svg { display: block; width: 100vw; height: 100vh; }
+
+    /* ── Graph elements ─────────────────────────────────── */
+
+    .link {
+      stroke: rgba(255,255,255,0.1);
+      stroke-width: 1.2;
+      fill: none;
+      transition: stroke 0.15s, opacity 0.15s;
+    }
+    .link.hi  { stroke: rgba(255,255,255,0.55); stroke-width: 1.8; }
+    .link.dim { stroke: rgba(255,255,255,0.03); }
+
+    .node circle {
+      cursor: pointer;
+      transition: r 0.15s;
+    }
+    .node circle.hi  { stroke: #fff; stroke-width: 2.5; stroke-opacity: 0.8; }
+    .node circle.dim { opacity: 0.18; }
+
+    .node text {
+      font-size: 11px;
+      fill: rgba(212,212,212,0.85);
+      pointer-events: none;
+      user-select: none;
+    }
+    .node text.dim { opacity: 0.12; }
+
+    /* ── Side panel ─────────────────────────────────────── */
+
+    #panel {
+      position: fixed;
+      top: 0; right: -300px;
+      width: 280px; height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 20px 16px;
+      overflow-y: auto;
+      transition: right 0.22s cubic-bezier(.4,0,.2,1);
+      z-index: 10;
+    }
+    #panel.open { right: 0; }
+
+    #panel-close {
+      position: absolute; top: 14px; right: 14px;
+      background: none; border: none;
+      color: var(--muted); font-size: 20px; line-height: 1;
+      cursor: pointer;
+    }
+    #panel-close:hover { color: var(--text); }
+
+    #panel h2 {
+      font-size: 15px; font-weight: 600;
+      color: #fff; margin-bottom: 4px; padding-right: 24px;
+    }
+    #panel-path {
+      font-size: 11px; font-family: monospace;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    #panel-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); text-decoration: none;
+      padding: 5px 11px; border-radius: 6px; font-size: 12px;
+      margin-bottom: 20px;
+    }
+    #panel-link:hover { background: var(--border); }
+
+    #panel h3 {
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: .09em; color: var(--muted); margin-bottom: 8px;
+    }
+    #conn-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    #conn-list li {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2); border-radius: 5px;
+      padding: 6px 10px; font-size: 12px; cursor: pointer;
+    }
+    #conn-list li:hover { background: var(--border); }
+    #conn-list li.empty { color: var(--muted); cursor: default; }
+    .cdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Controls ───────────────────────────────────────── */
+
+    #controls {
+      position: fixed; top: 16px; left: 16px;
+      display: flex; flex-direction: column; gap: 7px;
+      z-index: 10;
+    }
+    #search {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px;
+      color: var(--text); font-size: 13px; width: 210px; outline: none;
+    }
+    #search:focus { border-color: var(--accent); }
+    #search::placeholder { color: var(--muted); }
+
+    #search-count {
+      font-size: 11px; color: var(--muted); padding-left: 2px;
+      min-height: 16px;
+    }
+
+    #zoom-btns { display: flex; gap: 4px; }
+    .zbtn {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--muted);
+      width: 30px; height: 30px; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .zbtn:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── Legend ─────────────────────────────────────────── */
+
+    #legend {
+      position: fixed; bottom: 16px; left: 16px;
+      background: rgba(26,26,26,0.92); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; font-size: 12px;
+      backdrop-filter: blur(6px); z-index: 10;
+    }
+    #legend h4 {
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: .09em; color: var(--muted); margin-bottom: 9px;
+    }
+    .li { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #bbb; }
+    .ldot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Stats ──────────────────────────────────────────── */
+
+    #stats {
+      position: fixed; top: 16px; right: 16px;
+      font-size: 12px; color: var(--muted); z-index: 10; text-align: right;
+    }
+    #stats strong { color: #999; }
+  </style>
+</head>
+<body>
+
+<svg id="g"></svg>
+
+<!-- Side panel -->
+<div id="panel">
+  <button id="panel-close">×</button>
+  <h2 id="panel-title"></h2>
+  <div id="panel-path"></div>
+  <a id="panel-link" href="#" target="_blank" rel="noopener">Open on GitHub ↗</a>
+  <h3>Connections</h3>
+  <ul id="conn-list"></ul>
+</div>
+
+<!-- Controls -->
+<div id="controls">
+  <input id="search" type="text" placeholder="Search notes…" autocomplete="off">
+  <div id="search-count"></div>
+  <div id="zoom-btns">
+    <button class="zbtn" id="zin"   title="Zoom in">+</button>
+    <button class="zbtn" id="zout"  title="Zoom out">−</button>
+    <button class="zbtn" id="zreset" title="Reset view">⌂</button>
+  </div>
+</div>
+
+<!-- Legend -->
+<div id="legend">
+  <h4>Legend</h4>
+  <div id="legend-items"></div>
+</div>
+
+<!-- Stats -->
+<div id="stats">
+  <strong id="nc">—</strong> notes &nbsp;·&nbsp; <strong id="lc">—</strong> connections
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ── Embedded graph data (auto-updated by scripts/generate-graph.js) ──────────
+// @GRAPH_DATA_START
+const GRAPH_DATA = {"nodes":[{"id":"00-inbox/README","label":"Inbox","path":"00-inbox/README.md","group":"inbox"},{"id":"01-projects/README","label":"Projects","path":"01-projects/README.md","group":"projects"},{"id":"03-resources/README","label":"Resources","path":"03-resources/README.md","group":"resources"},{"id":"03-resources/ai/README","label":"Ai","path":"03-resources/ai/README.md","group":"resources"},{"id":"03-resources/coding/README","label":"Coding","path":"03-resources/coding/README.md","group":"resources"},{"id":"03-resources/finances/README","label":"Finances","path":"03-resources/finances/README.md","group":"resources"},{"id":"03-resources/health/README","label":"Health","path":"03-resources/health/README.md","group":"resources"},{"id":"04-archives/README","label":"Archives","path":"04-archives/README.md","group":"archives"},{"id":"05-journal/README","label":"Journal","path":"05-journal/README.md","group":"journal"},{"id":"06-templates/README","label":"Templates","path":"06-templates/README.md","group":"templates"},{"id":"06-templates/area","label":"Area","path":"06-templates/area.md","group":"templates"},{"id":"06-templates/book-note","label":"Book Note","path":"06-templates/book-note.md","group":"templates"},{"id":"06-templates/daily-note","label":"Daily Note","path":"06-templates/daily-note.md","group":"templates"},{"id":"06-templates/project","label":"Project","path":"06-templates/project.md","group":"templates"},{"id":"06-templates/resource","label":"Resource","path":"06-templates/resource.md","group":"templates"},{"id":"06-templates/weekly-review","label":"Weekly Review","path":"06-templates/weekly-review.md","group":"templates"},{"id":"README","label":"Second Brain","path":"README.md","group":"root"}],"links":[{"source":"03-resources/README","target":"03-resources/ai/README"},{"source":"03-resources/README","target":"03-resources/coding/README"},{"source":"03-resources/README","target":"03-resources/finances/README"},{"source":"03-resources/README","target":"03-resources/health/README"},{"source":"06-templates/README","target":"06-templates/project"},{"source":"06-templates/README","target":"06-templates/area"},{"source":"06-templates/README","target":"06-templates/resource"},{"source":"06-templates/README","target":"06-templates/daily-note"},{"source":"06-templates/README","target":"06-templates/weekly-review"},{"source":"06-templates/README","target":"06-templates/book-note"},{"source":"README","target":"00-inbox/README"},{"source":"README","target":"01-projects/README"},{"source":"README","target":"03-resources/README"},{"source":"README","target":"04-archives/README"},{"source":"README","target":"05-journal/README"},{"source":"README","target":"06-templates/README"}],"generated":"2026-06-21T07:10:55.512Z"};
+// @GRAPH_DATA_END
+
+// ── Config ───────────────────────────────────────────────────────────────────
+
+const REPO   = 'code1sentinel/second-brain';
+const BRANCH = 'main';
+
+const GROUPS = {
+  root:      { label: 'Root',      color: '#e4c97e' },
+  inbox:     { label: 'Inbox',     color: '#56c2d6' },
+  projects:  { label: 'Projects',  color: '#7ec8e3' },
+  resources: { label: 'Resources', color: '#6dbf6d' },
+  archives:  { label: 'Archives',  color: '#909090' },
+  journal:   { label: 'Journal',   color: '#c792ea' },
+  templates: { label: 'Templates', color: '#f78c6c' },
+  other:     { label: 'Other',     color: '#aaaaaa' },
+};
+
+function gcolor(d) { return (GROUPS[d.group] || GROUPS.other).color; }
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+
+(function init() {
+  const data = GRAPH_DATA;
+  if (!data.nodes.length) {
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;color:#666;font-family:monospace">
+        <div style="font-size:32px">🕸️</div>
+        <div>No graph data yet.</div>
+        <div>Run: <code style="background:#222;padding:2px 8px;border-radius:4px">node scripts/generate-graph.js</code></div>
+      </div>`;
+    return;
+  }
+
+  // Stats
+  document.getElementById('nc').textContent = data.nodes.length;
+  document.getElementById('lc').textContent = data.links.length;
+
+  // Build adjacency for degree + fast lookup
+  const adj = new Map(data.nodes.map(n => [n.id, new Set()]));
+  for (const l of data.links) {
+    const s = l.source.id || l.source, t = l.target.id || l.target;
+    adj.get(s)?.add(t); adj.get(t)?.add(s);
+  }
+
+  function degree(d) { return adj.get(d.id)?.size || 0; }
+  function radius(d) { return 4.5 + Math.sqrt(degree(d)) * 2.8; }
+
+  // Legend
+  const groups = [...new Set(data.nodes.map(n => n.group))].filter(g => GROUPS[g]);
+  const legEl  = document.getElementById('legend-items');
+  for (const g of groups) {
+    const { label, color } = GROUPS[g];
+    const el = document.createElement('div');
+    el.className = 'li';
+    el.innerHTML = `<div class="ldot" style="background:${color}"></div><span>${label}</span>`;
+    legEl.appendChild(el);
+  }
+
+  const W = window.innerWidth, H = window.innerHeight;
+  const svg = d3.select('#g');
+  const root = svg.append('g');
+
+  // ── Zoom / pan ──────────────────────────────────────────────────────────
+
+  const zoom = d3.zoom().scaleExtent([0.05, 8])
+    .on('zoom', e => root.attr('transform', e.transform));
+  svg.call(zoom).on('dblclick.zoom', null);
+
+  document.getElementById('zin').onclick    = () => svg.transition().duration(280).call(zoom.scaleBy, 1.45);
+  document.getElementById('zout').onclick   = () => svg.transition().duration(280).call(zoom.scaleBy, 0.68);
+  document.getElementById('zreset').onclick = () => svg.transition().duration(380).call(zoom.transform, d3.zoomIdentity.translate(W/2, H/2));
+
+  // ── Force simulation ────────────────────────────────────────────────────
+
+  const sim = d3.forceSimulation(data.nodes)
+    .force('link',   d3.forceLink(data.links).id(d => d.id).distance(100).strength(0.35))
+    .force('charge', d3.forceManyBody().strength(-280).distanceMax(500))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collide', d3.forceCollide().radius(d => radius(d) + 9));
+
+  // ── Links ───────────────────────────────────────────────────────────────
+
+  const linkSel = root.append('g').attr('class', 'links')
+    .selectAll('line').data(data.links).join('line').attr('class', 'link');
+
+  // ── Nodes ───────────────────────────────────────────────────────────────
+
+  const nodeSel = root.append('g').attr('class', 'nodes')
+    .selectAll('g.node').data(data.nodes).join('g').attr('class', 'node')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+  nodeSel.append('circle')
+    .attr('r', radius)
+    .attr('fill', gcolor)
+    .attr('fill-opacity', 0.88);
+
+  nodeSel.append('text')
+    .attr('dy', d => radius(d) + 13)
+    .attr('text-anchor', 'middle')
+    .text(d => d.label);
+
+  // ── Tick ────────────────────────────────────────────────────────────────
+
+  sim.on('tick', () => {
+    linkSel
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  // ── Highlight on hover ──────────────────────────────────────────────────
+
+  function setHighlight(focusId) {
+    if (!focusId) {
+      linkSel.classed('hi', false).classed('dim', false);
+      nodeSel.select('circle').classed('hi', false).classed('dim', false);
+      nodeSel.select('text').classed('dim', false);
+      return;
+    }
+    const nbrs = adj.get(focusId) || new Set();
+    const inScope = id => id === focusId || nbrs.has(id);
+
+    linkSel
+      .classed('hi',  l => (l.source.id||l.source) === focusId || (l.target.id||l.target) === focusId)
+      .classed('dim', l => (l.source.id||l.source) !== focusId && (l.target.id||l.target) !== focusId);
+
+    nodeSel.select('circle')
+      .classed('hi',  n => n.id === focusId)
+      .classed('dim', n => !inScope(n.id));
+    nodeSel.select('text').classed('dim', n => !inScope(n.id));
+  }
+
+  nodeSel
+    .on('mouseenter', (_, d) => setHighlight(d.id))
+    .on('mouseleave', ()     => setHighlight(null))
+    .on('click',      (_, d) => openPanel(d));
+
+  // Clicking on blank canvas closes panel
+  svg.on('click', e => { if (e.target === svg.node()) closePanel(); });
+
+  // ── Panel ───────────────────────────────────────────────────────────────
+
+  const panel = document.getElementById('panel');
+  document.getElementById('panel-close').onclick = closePanel;
+
+  function closePanel() { panel.classList.remove('open'); }
+
+  function openPanel(d) {
+    document.getElementById('panel-title').textContent = d.label;
+    document.getElementById('panel-path').textContent  = d.path;
+    document.getElementById('panel-link').href =
+      `https://github.com/${REPO}/blob/${BRANCH}/${d.path}`;
+
+    const nbrs   = [...(adj.get(d.id) || [])];
+    const list   = document.getElementById('conn-list');
+    list.innerHTML = '';
+
+    if (!nbrs.length) {
+      const li = document.createElement('li');
+      li.className = 'empty'; li.textContent = 'No connections';
+      list.appendChild(li);
+    } else {
+      nbrs.forEach(nid => {
+        const n  = data.nodes.find(x => x.id === nid);
+        if (!n) return;
+        const li = document.createElement('li');
+        li.innerHTML = `<div class="cdot" style="background:${gcolor(n)}"></div>${n.label}`;
+        li.onclick = () => openPanel(n);
+        list.appendChild(li);
+      });
+    }
+
+    panel.classList.add('open');
+  }
+
+  // ── Search ──────────────────────────────────────────────────────────────
+
+  document.getElementById('search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    const countEl = document.getElementById('search-count');
+
+    if (!q) {
+      setHighlight(null);
+      linkSel.classed('dim', false);
+      countEl.textContent = '';
+      return;
+    }
+
+    const matched = new Set(data.nodes.filter(n => n.label.toLowerCase().includes(q)).map(n => n.id));
+    countEl.textContent = matched.size ? `${matched.size} match${matched.size > 1 ? 'es' : ''}` : 'No matches';
+
+    nodeSel.select('circle').classed('hi', n => matched.has(n.id)).classed('dim', n => !matched.has(n.id));
+    nodeSel.select('text').classed('dim', n => !matched.has(n.id));
+    linkSel.classed('hi', false).classed('dim', true);
+  });
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closePanel(); document.getElementById('search').value = ''; setHighlight(null); linkSel.classed('dim', false); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f') { e.preventDefault(); document.getElementById('search').focus(); }
+  });
+
+  // ── Resize ──────────────────────────────────────────────────────────────
+
+  window.addEventListener('resize', () => {
+    sim.force('center', d3.forceCenter(window.innerWidth/2, window.innerHeight/2)).alpha(0.1).restart();
+  });
+})();
+</script>
+</body>
+</html>
