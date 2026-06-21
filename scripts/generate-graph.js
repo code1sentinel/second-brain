@@ -87,6 +87,7 @@ const idSet    = new Set(nodes.map(n => n.id));
 const linkSet  = new Set();
 const links    = [];
 
+// Pass 1: explicit markdown links
 for (const file of mdFiles) {
   const content = fs.readFileSync(path.join(ROOT, file), 'utf8');
   const srcId   = nodeId(file);
@@ -99,6 +100,61 @@ for (const file of mdFiles) {
     if (linkSet.has(key)) continue;
     linkSet.add(key);
     links.push({ source: srcId, target: tgtId });
+  }
+}
+
+// Pass 2: implicit folder-hierarchy edges
+// Every file is connected to its parent folder's README, ensuring all
+// nodes appear in the graph even without explicit markdown links.
+for (const file of mdFiles) {
+  const parts    = file.split('/');
+  if (parts.length < 2) continue;
+  const fileName = parts[parts.length - 1];
+
+  let parentId;
+  if (fileName.toLowerCase() === 'readme.md') {
+    parentId = parts.length === 2
+      ? 'README'
+      : parts.slice(0, -2).join('/') + '/README';
+  } else {
+    parentId = parts.slice(0, -1).join('/') + '/README';
+  }
+
+  const tgtId = nodeId(file);
+  if (!idSet.has(parentId) || parentId === tgtId) continue;
+  const key = [parentId, tgtId].sort().join('||');
+  if (linkSet.has(key)) continue;
+  linkSet.add(key);
+  links.push({ source: parentId, target: tgtId });
+}
+
+// Pass 3: external resource nodes
+// Each external URL found in any .md file becomes its own node,
+// connected to the file that references it.
+const seenUrls = new Map(); // url → node id
+
+for (const file of mdFiles) {
+  const content = fs.readFileSync(path.join(ROOT, file), 'utf8');
+  const srcId   = nodeId(file);
+
+  for (const m of content.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)) {
+    const label = m[1].trim();
+    const url   = m[2].replace(/\/$/, '');
+
+    let extId;
+    if (seenUrls.has(url)) {
+      extId = seenUrls.get(url);
+    } else {
+      extId = 'ext:' + url;
+      seenUrls.set(url, extId);
+      nodes.push({ id: extId, label, path: url, group: 'link', external: true });
+      idSet.add(extId);
+    }
+
+    const key = [srcId, extId].sort().join('||');
+    if (linkSet.has(key)) continue;
+    linkSet.add(key);
+    links.push({ source: srcId, target: extId });
   }
 }
 
@@ -135,13 +191,15 @@ const GROUP_COLORS = {
   archives:  '#909090',
   journal:   '#c792ea',
   templates: '#f78c6c',
+  link:      '#e8a87c',
   other:     '#aaaaaa',
 };
 
 const GROUP_LABELS = {
   root: 'Root', inbox: 'Inbox', projects: 'Projects',
   resources: 'Resources', archives: 'Archives',
-  journal: 'Journal', templates: 'Templates', other: 'Other',
+  journal: 'Journal', templates: 'Templates',
+  link: 'Resource Link', other: 'Other',
 };
 
 // Degree map
@@ -226,8 +284,16 @@ const nodeSvg = layoutN.map(n => {
   const c = GROUP_COLORS[n.group] || '#aaa';
   const p = pos.get(n.id);
   const lx = p.x.toFixed(1), ly = (p.y + parseFloat(r) + 12).toFixed(1);
+  let shape;
+  if (n.external) {
+    // Diamond shape for external resource nodes
+    const s = parseFloat(r) * 1.1;
+    shape = `<polygon points="${p.x.toFixed(1)},${(p.y-s).toFixed(1)} ${(p.x+s).toFixed(1)},${p.y.toFixed(1)} ${p.x.toFixed(1)},${(p.y+s).toFixed(1)} ${(p.x-s).toFixed(1)},${p.y.toFixed(1)}" fill="${c}" fill-opacity="0.85" filter="url(#glow)"/>`;
+  } else {
+    shape = `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}" fill="${c}" fill-opacity="0.9" filter="url(#glow)"/>`;
+  }
   return [
-    `  <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}" fill="${c}" fill-opacity="0.9" filter="url(#glow)"/>`,
+    `  ${shape}`,
     `  <text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" fill="#d4d4d4" fill-opacity="0.85">${esc(n.label)}</text>`,
   ].join('\n');
 }).join('\n');
