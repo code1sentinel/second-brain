@@ -28,5 +28,6 @@ Reference material organized by **topic** — not by project or area.
 |--------|-------------|
 | [ai](./ai/) | Artificial intelligence, LLMs, tools |
 | [coding](./coding/) | Programming, software development, tools |
+| [cybersecurity](./cybersecurity/) | Security concepts, DFIR, threat hunting, tools |
 | [finances](./finances/) | Budget, investments, taxes |
 | [health](./health/) | Fitness, nutrition, sleep, mental health |
