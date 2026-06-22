@@ -1,6 +1,8 @@
 # Health
 
-## Standard to maintain
+> **Summary:** Health and wellness reference covering fitness, nutrition, sleep, and mental health habits.
+
+## Topics
 
 > Feel energetic, sleep well, and stay physically active.
 

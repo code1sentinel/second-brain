@@ -1,6 +1,8 @@
 # Finances
 
-## Standard to maintain
+> **Summary:** Personal finance reference — budget tracking, savings goals, investment strategy, and tax notes.
+
+## Topics
 
 > Spend intentionally, save consistently, and understand where money goes.
 

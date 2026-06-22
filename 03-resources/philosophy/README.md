@@ -2,6 +2,8 @@
 
 Reference material on philosophy — Stoicism, ethics, and wisdom for daily life.
 
+> **Summary:** Stoic reading list (Ryan Holiday, Marcus Aurelius, Epictetus) plus Naval Ravikant's almanack. 7 books tracked with reading status.
+
 ## Reading List
 
 | # | Book | Author | Status |

@@ -2,6 +2,8 @@
 
 Reference material on artificial intelligence, LLMs, and related tools.
 
+> **Summary:** Notes and links on AI concepts, language models, and certifications. Currently tracking the Claude Certified Architect path.
+
 ## Links & Resources
 
 - [Claude Certified Architect — Foundations: Learning Journey & Exam Experience](https://medium.com/@ihor.sasovets/claude-certified-architect-foundations-my-learning-journey-and-exam-experience-826d4c08e664) — Ihor Sasovets' walkthrough of the certification path

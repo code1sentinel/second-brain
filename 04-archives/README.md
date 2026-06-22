@@ -2,10 +2,11 @@
 
 Completed projects and inactive material — kept for reference, not for action.
 
+> **Summary:** Your institutional memory. Everything that is finished or no longer active lives here. Never delete — the context from past work surfaces answers you'd otherwise have to re-derive.
+
 ## What belongs here
 
 - Finished projects (move the whole project folder here)
-- Old area content that's no longer active
 - Resources you've outgrown but don't want to delete
 
 ## Why archive instead of delete?

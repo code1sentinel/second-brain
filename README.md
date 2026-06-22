@@ -12,24 +12,22 @@ A personal knowledge management system built on the **PARA method** by Tiago For
 
 ## Structure
 
-| Folder | Purpose |
-|--------|---------|
-| [00-inbox](./00-inbox/) | Capture everything here first — process later |
-| [01-projects](./01-projects/) | Active work with a clear goal and deadline |
-| [03-resources](./03-resources/) | Reference material organized by topic |
-| [04-archives](./04-archives/) | Completed projects and inactive material |
-| [05-journal](./05-journal/) | Daily and weekly reflections |
-| [06-templates](./06-templates/) | Reusable note templates |
+| Folder | Purpose | Note |
+|--------|---------|------|
+| [00-inbox](./00-inbox/) | Capture everything here first — process later | Clear weekly; nothing lives here permanently |
+| [01-projects](./01-projects/) | Active work with a clear goal and deadline | If there's no finish line, it belongs in Resources |
+| [03-resources](./03-resources/) | Reference material organised by topic | Knowledge you want to keep regardless of current projects |
+| [04-archives](./04-archives/) | Completed projects and inactive material | Archive, never delete — past context is always useful |
 
 ## Workflow
 
 ```
-Capture → Inbox → Clarify → Organize → Review → Engage
+Capture → Inbox → Clarify → Organise → Review → Engage
 ```
 
 1. **Capture** — Dump everything into `00-inbox` without judgment.
 2. **Clarify** — Process inbox items: is it actionable? What's the next step?
-3. **Organize** — Move to the right PARA folder.
+3. **Organise** — Move to the right PARA folder.
 4. **Review** — Weekly sweep of projects and resources; monthly archive pass.
 5. **Engage** — Work from your system, not your head.
 

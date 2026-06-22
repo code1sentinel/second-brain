@@ -2,6 +2,8 @@
 
 A **project** is any work with a clear outcome and a deadline (even a self-imposed one).
 
+> **Summary:** Your active workload. Each project here should have a visible next action. If you can't name the next step, the project is stalled — unblock it or pause it.
+
 ## What belongs here
 
 - Has a specific goal ("Launch feature X", "Read book Y", "Plan trip to Z")
@@ -10,7 +12,7 @@ A **project** is any work with a clear outcome and a deadline (even a self-impos
 
 ## What does NOT belong here
 
-- Ongoing habits or responsibilities → `02-areas`
+- Ongoing habits or responsibilities → `03-resources`
 - Reference material with no action → `03-resources`
 
 ## Folder convention

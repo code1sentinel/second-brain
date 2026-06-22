@@ -1,6 +1,8 @@
 # Resources
 
-Reference material organized by **topic** — not by project or area.
+Reference material organised by **topic** — not by project.
+
+> **Summary:** Your personal library. Anything you find interesting or useful goes here, organised by topic. Unlike projects, resources have no deadline — they're knowledge you want to keep regardless of what you're working on right now.
 
 ## What belongs here
 
