@@ -19,6 +19,8 @@ A personal knowledge management system built on the **PARA method** by Tiago For
 | [03-resources](./03-resources/) | Reference material organised by topic | Knowledge you want to keep regardless of current projects |
 | [04-archives](./04-archives/) | Completed projects and inactive material | Archive, never delete — past context is always useful |
 
+**[→ Read the full operating guide](./GUIDE.md)** — CODE workflow, daily habits, progressive summarisation, and principles.
+
 ## Workflow
 
 ```
